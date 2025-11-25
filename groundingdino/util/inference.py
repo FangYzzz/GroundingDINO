@@ -36,7 +36,8 @@ def load_model(model_config_path: str, model_checkpoint_path: str, device: str =
     return model
 
 
-def load_image(image_path: str) -> Tuple[np.array, torch.Tensor]:
+# def load_image(image_path: str) -> Tuple[np.array, torch.Tensor]:
+def load_image(image_np: np.ndarray) -> Tuple[np.ndarray, torch.Tensor]:
     transform = T.Compose(
         [
             T.RandomResize([800], max_size=1333),
@@ -44,10 +45,16 @@ def load_image(image_path: str) -> Tuple[np.array, torch.Tensor]:
             T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ]
     )
-    image_source = Image.open(image_path).convert("RGB")
-    image = np.asarray(image_source)
-    image_transformed, _ = transform(image_source, None)
-    return image, image_transformed
+    # image_source = Image.open(image_path).convert("RGB")
+    # image = np.asarray(image_source)
+    # image_transformed, _ = transform(image_source, None)
+    # return image, image_transformed
+
+    # np.ndarray -> PIL.Image
+    image_pil = Image.fromarray(image_np)
+    image_transformed, _ = transform(image_pil, None)
+
+    return image_np, image_transformed
 
 
 def predict(

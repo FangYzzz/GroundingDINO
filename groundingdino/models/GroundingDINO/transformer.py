@@ -242,7 +242,7 @@ class Transformer(nn.Module):
         mask_flatten = torch.cat(mask_flatten, 1)  # bs, \sum{hxw}
         lvl_pos_embed_flatten = torch.cat(lvl_pos_embed_flatten, 1)  # bs, \sum{hxw}, c
         spatial_shapes = torch.as_tensor(
-            spatial_shapes, dtype=torch.long, device=src_flatten.device
+            spatial_shapes, dtype=torch.long, device= 'cuda'  #src_flatten.device
         )
         level_start_index = torch.cat(
             (spatial_shapes.new_zeros((1,)), spatial_shapes.prod(1).cumsum(0)[:-1])
@@ -255,11 +255,12 @@ class Transformer(nn.Module):
         #########################################################
         # Begin Encoder
         #########################################################
+        # print("spatial_shapes.type().is_cuda():  ",spatial_shapes.is_cuda)
         memory, memory_text = self.encoder(
             src_flatten,
             pos=lvl_pos_embed_flatten,
             level_start_index=level_start_index,
-            spatial_shapes=spatial_shapes,
+            spatial_shapes=spatial_shapes.to('cuda'),
             valid_ratios=valid_ratios,
             key_padding_mask=mask_flatten,
             memory_text=text_dict["encoded_text"],
@@ -554,6 +555,7 @@ class TransformerEncoder(nn.Module):
                         memory_text,
                         key_padding_mask,
                         text_attention_mask,
+                        use_reentrant=False,
                     )
                 else:
                     output, memory_text = self.fusion_layers[layer_id](
@@ -581,6 +583,7 @@ class TransformerEncoder(nn.Module):
                     spatial_shapes,
                     level_start_index,
                     key_padding_mask,
+                    use_reentrant=False,
                 )
             else:
                 output = layer(
@@ -859,7 +862,8 @@ class DeformableTransformerDecoderLayer(nn.Module):
         return tensor if pos is None else tensor + pos
 
     def forward_ffn(self, tgt):
-        with torch.cuda.amp.autocast(enabled=False):
+        # with torch.cuda.amp.autocast(enabled=False):
+        with torch.amp.autocast('cuda', enabled=False):
             tgt2 = self.linear2(self.dropout3(self.activation(self.linear1(tgt))))
         tgt = tgt + self.dropout4(tgt2)
         tgt = self.norm3(tgt)
