@@ -144,3 +144,8 @@ grounding/version.py
 
 vis/
 tmp/
+
+# Local model downloads and generated package metadata.
+/groundingdino/models/bert-base-uncased/
+/groundingdino/version.py
+/weights/
